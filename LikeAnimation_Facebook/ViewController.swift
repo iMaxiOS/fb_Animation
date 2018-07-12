@@ -19,20 +19,32 @@ class ViewController: UIViewController {
        let containers = UIView()
         containers.backgroundColor = .white
         
-        let redView = UIView()
-        redView.backgroundColor = .red
-        let blueView = UIView()
-        blueView.backgroundColor = .blue
-        let yellowView = UIView()
-        yellowView.backgroundColor = .yellow
-                
-        let arrangedSubviews = [redView, blueView]
+//        let redView = UIView()
+//        redView.backgroundColor = .red
+//        let blueView = UIView()
+//        blueView.backgroundColor = .blue
+//        let yellowView = UIView()
+//        yellowView.backgroundColor = .yellow
+//        let grayView = UIView()
+//        grayView.backgroundColor = .gray
+//
+//        let arrangedSubviews = [redView, blueView, yellowView, grayView]
+        
+        let iconHeight: CGFloat = 50
+        let padding: CGFloat = 8
+        
+        let arrangedSubviews = [UIColor.red, .blue, .gray, .black].map({ (color) -> UIView in
+            let v = UIView()
+            v.backgroundColor = color
+            v.layer.cornerRadius = iconHeight / 2
+            return v
+        })
+        
         let stackView = UIStackView(arrangedSubviews: arrangedSubviews)
         stackView.distribution = .fillEqually
         
         //configuration options
-        let iconHeight: CGFloat = 50
-        let padding: CGFloat = 8
+        
         
         stackView.spacing = padding
         stackView.layoutMargins = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
@@ -40,7 +52,10 @@ class ViewController: UIViewController {
         
         containers.addSubview(stackView)
         
-        containers.frame = CGRect(x: 0, y: 0, width: 200, height: iconHeight + 2 * padding)
+        let numIcons = CGFloat(arrangedSubviews.count)
+        let width = numIcons * iconHeight + (numIcons + 1) * padding
+        
+        containers.frame = CGRect(x: 0, y: 0, width: width, height: iconHeight + 2 * padding)
         stackView.frame = containers.frame
         
         return containers
