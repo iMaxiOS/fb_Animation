@@ -11,101 +11,150 @@ import UIKit
 class ViewController: UIViewController {
     
     let bgImageView: UIImageView = {
-       let bg = UIImageView(image: #imageLiteral(resourceName: "paris"))
-        return bg
+        let imageView = UIImageView(image: #imageLiteral(resourceName: "paris"))
+        return imageView
     }()
     
-    let iconContainerView: UIView = {
-       let containers = UIView()
-        containers.backgroundColor = .white
+    let iconsContainerView: UIView = {
+        let containerView = UIView()
+        containerView.backgroundColor = .white
         
-//        let redView = UIView()
-//        redView.backgroundColor = .red
-//        let blueView = UIView()
-//        blueView.backgroundColor = .blue
-//        let yellowView = UIView()
-//        yellowView.backgroundColor = .yellow
-//        let grayView = UIView()
-//        grayView.backgroundColor = .gray
-//
-//        let arrangedSubviews = [redView, blueView, yellowView, grayView]
+        //        let redView = UIView()
+        //        redView.backgroundColor = .red
+        //        let blueView = UIView()
+        //        blueView.backgroundColor = .blue
+        //        let yellowView = UIView()
+        //        yellowView.backgroundColor = .yellow
+        //        let grayView = UIView()
+        //        grayView.backgroundColor = .gray
+        //
+        //        let arrangedSubviews = [redView, blueView, yellowView, grayView]
         
-        let iconHeight: CGFloat = 50
-        let padding: CGFloat = 8
+        // configuration options
+        let iconHeight: CGFloat = 38
+        let padding: CGFloat = 6
         
-        let arrangedSubviews = [UIColor.red, .blue, .gray, .black].map({ (color) -> UIView in
-            let v = UIView()
-            v.backgroundColor = color
-            v.layer.cornerRadius = iconHeight / 2
-            return v
+        let images = [#imageLiteral(resourceName: "like"), #imageLiteral(resourceName: "heart"), #imageLiteral(resourceName: "surprised"), #imageLiteral(resourceName: "smile"), #imageLiteral(resourceName: "cry"), #imageLiteral(resourceName: "angry")]
+        
+        let arrangedSubviews = images.map({ (image) -> UIView in
+            let imageView = UIImageView(image: image)
+            imageView.layer.cornerRadius = iconHeight / 2
+            // required for hit testing
+            imageView.isUserInteractionEnabled = true
+            return imageView
+            //            let v = UIView()
+            //            v.backgroundColor = color
+            //            v.layer.cornerRadius = iconHeight / 2
+            //            return v
         })
         
         let stackView = UIStackView(arrangedSubviews: arrangedSubviews)
         stackView.distribution = .fillEqually
         
-        //configuration options
-        
-        
         stackView.spacing = padding
         stackView.layoutMargins = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
         stackView.isLayoutMarginsRelativeArrangement = true
         
-        containers.addSubview(stackView)
+        containerView.addSubview(stackView)
         
         let numIcons = CGFloat(arrangedSubviews.count)
-        let width = numIcons * iconHeight + (numIcons + 1) * padding
+        let width =  numIcons * iconHeight + (numIcons + 1) * padding
         
-        containers.frame = CGRect(x: 0, y: 0, width: width, height: iconHeight + 2 * padding)
-        stackView.frame = containers.frame
+        containerView.frame = CGRect(x: 0, y: 0, width: width, height: iconHeight + 2 * padding)
+        containerView.layer.cornerRadius = containerView.frame.height / 2
         
-        return containers
+        // shadow
+        containerView.layer.shadowColor = UIColor(white: 0.4, alpha: 0.4).cgColor
+        containerView.layer.shadowRadius = 8
+        containerView.layer.shadowOpacity = 0.5
+        containerView.layer.shadowOffset = CGSize(width: 0, height: 4)
+        
+        stackView.frame = containerView.frame
+        
+        return containerView
     }()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         view.addSubview(bgImageView)
         bgImageView.frame = view.frame
-        view.clipsToBounds = true
         
-        setupGestureRecognizer()
-        
+        setupLongPressGesture()
     }
     
-    fileprivate func setupGestureRecognizer() {
-        view.addGestureRecognizer(UILongPressGestureRecognizer(target: self, action: #selector(HandleLongPress)))
-        
+    fileprivate func setupLongPressGesture() {
+        view.addGestureRecognizer(UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress)))
     }
     
-    @objc func HandleLongPress(gesture: UILongPressGestureRecognizer) {
-//        print("Long pressed:", Date())
-
+    @objc func handleLongPress(gesture: UILongPressGestureRecognizer) {
         if gesture.state == .began {
-            HandleGestureBegan(gesture: gesture)
+            handleGestureBegan(gesture: gesture)
         } else if gesture.state == .ended {
-            iconContainerView.removeFromSuperview()
+            
+            // clean up the animation
+            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 1, options: .curveEaseOut, animations: {
+                let stackView = self.iconsContainerView.subviews.first
+                stackView?.subviews.forEach({ (imageView) in
+                    imageView.transform = .identity
+                })
+                
+                self.iconsContainerView.transform = self.iconsContainerView.transform.translatedBy(x: 0, y: 50)
+                self.iconsContainerView.alpha = 0
+                
+            }, completion: { (_) in
+                self.iconsContainerView.removeFromSuperview()
+            })
+            
+            
+        } else if gesture.state == .changed {
+            handleGestureChanged(gesture: gesture)
         }
     }
     
-    fileprivate func HandleGestureBegan(gesture: UILongPressGestureRecognizer) {
-        view.addSubview(iconContainerView)
+    fileprivate func handleGestureChanged(gesture: UILongPressGestureRecognizer) {
+        let pressedLocation = gesture.location(in: self.iconsContainerView)
+        print(pressedLocation)
         
-        let pressLocation = gesture.location(in: self.view)
-        print(pressLocation)
+        let fixedYLocation = CGPoint(x: pressedLocation.x, y: self.iconsContainerView.frame.height / 2)
         
-        //transformation of the red box
-        let centerX = (view.frame.width - iconContainerView.frame.width) / 2
+        let hitTestView = iconsContainerView.hitTest(fixedYLocation, with: nil)
         
-        //alpha
-        iconContainerView.alpha = 0
-        self.iconContainerView.transform = CGAffineTransform(translationX: centerX, y: pressLocation.y)
-        
-        UIView.animate(withDuration: 0.5, delay: 0, options: .curveEaseOut, animations: {
-            self.iconContainerView.transform = CGAffineTransform(translationX: centerX, y: pressLocation.y - self.iconContainerView.frame.height)
-            self.iconContainerView.alpha = 1
+        if hitTestView is UIImageView {
             
+            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 1, options: .curveEaseOut, animations: {
+                
+                let stackView = self.iconsContainerView.subviews.first
+                stackView?.subviews.forEach({ (imageView) in
+                    imageView.transform = .identity
+                })
+                
+                hitTestView?.transform = CGAffineTransform(translationX: 0, y: -50)
+                
+            })
+        }
+    }
+    
+    fileprivate func handleGestureBegan(gesture: UILongPressGestureRecognizer) {
+        view.addSubview(iconsContainerView)
+        
+        let pressedLocation = gesture.location(in: self.view)
+        print(pressedLocation)
+        
+        // transformation of the red box
+        let centeredX = (view.frame.width - iconsContainerView.frame.width) / 2
+        
+        iconsContainerView.alpha = 0
+        self.iconsContainerView.transform = CGAffineTransform(translationX: centeredX, y: pressedLocation.y)
+        
+        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 1, options: .curveEaseOut, animations: {
+            
+            self.iconsContainerView.alpha = 1
+            self.iconsContainerView.transform = CGAffineTransform(translationX: centeredX, y: pressedLocation.y - self.iconsContainerView.frame.height)
         })
     }
+    
+    override var prefersStatusBarHidden: Bool { return true }
     
 }
 
