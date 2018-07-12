@@ -15,10 +15,34 @@ class ViewController: UIViewController {
         return bg
     }()
     
-    let viewConteiners: UIView = {
+    let iconContainerView: UIView = {
        let containers = UIView()
-        containers.backgroundColor = .red
-        containers.frame = CGRect(x: 0, y: 0, width: 200, height: 100)
+        containers.backgroundColor = .white
+        
+        let redView = UIView()
+        redView.backgroundColor = .red
+        let blueView = UIView()
+        blueView.backgroundColor = .blue
+        let yellowView = UIView()
+        yellowView.backgroundColor = .yellow
+                
+        let arrangedSubviews = [redView, blueView]
+        let stackView = UIStackView(arrangedSubviews: arrangedSubviews)
+        stackView.distribution = .fillEqually
+        
+        //configuration options
+        let iconHeight: CGFloat = 50
+        let padding: CGFloat = 8
+        
+        stackView.spacing = padding
+        stackView.layoutMargins = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
+        stackView.isLayoutMarginsRelativeArrangement = true
+        
+        containers.addSubview(stackView)
+        
+        containers.frame = CGRect(x: 0, y: 0, width: 200, height: iconHeight + 2 * padding)
+        stackView.frame = containers.frame
+        
         return containers
     }()
 
@@ -34,36 +58,36 @@ class ViewController: UIViewController {
     }
     
     fileprivate func setupGestureRecognizer() {
-        view.addGestureRecognizer(UILongPressGestureRecognizer(target: self, action: #selector(gestureRecognizer)))
+        view.addGestureRecognizer(UILongPressGestureRecognizer(target: self, action: #selector(HandleLongPress)))
         
     }
     
-    @objc func gestureRecognizer(gesture: UILongPressGestureRecognizer) {
+    @objc func HandleLongPress(gesture: UILongPressGestureRecognizer) {
 //        print("Long pressed:", Date())
-        
+
         if gesture.state == .began {
-            gestureBegan(gesture: gesture)
+            HandleGestureBegan(gesture: gesture)
         } else if gesture.state == .ended {
-            viewConteiners.removeFromSuperview()
+            iconContainerView.removeFromSuperview()
         }
     }
     
-    fileprivate func gestureBegan(gesture: UILongPressGestureRecognizer) {
-        view.addSubview(viewConteiners)
+    fileprivate func HandleGestureBegan(gesture: UILongPressGestureRecognizer) {
+        view.addSubview(iconContainerView)
         
         let pressLocation = gesture.location(in: self.view)
         print(pressLocation)
         
         //transformation of the red box
-        let centerX = (view.frame.width - viewConteiners.frame.width) / 2
-        viewConteiners.transform = CGAffineTransform(translationX: centerX, y: pressLocation.y)
+        let centerX = (view.frame.width - iconContainerView.frame.width) / 2
         
         //alpha
-        viewConteiners.alpha = 0
+        iconContainerView.alpha = 0
+        self.iconContainerView.transform = CGAffineTransform(translationX: centerX, y: pressLocation.y)
         
         UIView.animate(withDuration: 0.5, delay: 0, options: .curveEaseOut, animations: {
-            self.viewConteiners.transform = CGAffineTransform(translationX: centerX, y: pressLocation.y - self.viewConteiners.frame.height)
-            self.viewConteiners.alpha = 1
+            self.iconContainerView.transform = CGAffineTransform(translationX: centerX, y: pressLocation.y - self.iconContainerView.frame.height)
+            self.iconContainerView.alpha = 1
             
         })
     }
